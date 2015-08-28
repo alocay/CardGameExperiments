@@ -13,7 +13,7 @@ namespace SolitaireStat
         private UnoBot[] players;
         private const int NumberOfStartingCards = 7;
         private int currentTurn = 0;
-        private int movementOfTurns = 1;
+        private bool reversed = false;
         private int numberOfTurns = 0;
 
         public UnoGame(int numOfplayers)
@@ -72,7 +72,7 @@ namespace SolitaireStat
             switch (card.Value)
             {
                 case Value.Reverse:
-                    this.movementOfTurns *= -1;
+                    this.reversed = !this.reversed;
                     break;
                 case Value.Skip:
                     this.currentTurn = GetNextPlayer();
@@ -105,7 +105,7 @@ namespace SolitaireStat
             {
                 case Value.Wild:
                     // Next player choose color and then continue with regular play
-                    chosenColor = this.players[this.currentTurn + this.movementOfTurns].GetDeclaredColor();
+                    chosenColor = this.players[this.currentTurn + 1].GetDeclaredColor();
                     break;
                 case Value.DrawFour:
                     // Reshuffle deck and start again
@@ -123,7 +123,14 @@ namespace SolitaireStat
 
         private int GetNextPlayer()
         {
-            return (this.currentTurn + this.movementOfTurns) % this.players.Length;
+            if (reversed)
+            {
+                return ((this.currentTurn - 1) % (this.players.Length * 2)) % this.players.Length;
+            }
+            else
+            {
+                return (this.currentTurn + 1) % this.players.Length;
+            }
         }
 
         private void DrawCardsAndSkip(int numOfCardsToDraw)
