@@ -72,7 +72,15 @@ namespace SolitaireStat
             switch (card.Value)
             {
                 case Value.Reverse:
-                    this.reversed = !this.reversed;
+                    if (this.players.Length == 2)
+                    {
+                        this.currentTurn = GetNextPlayer();
+                    }
+                    else
+                    {
+                        this.reversed = !this.reversed;
+                    }
+
                     break;
                 case Value.Skip:
                     this.currentTurn = GetNextPlayer();
@@ -125,7 +133,7 @@ namespace SolitaireStat
         {
             if (reversed)
             {
-                return ((this.currentTurn - 1) % (this.players.Length * 2)) % this.players.Length;
+                return (Math.Abs((this.currentTurn - 1) % (this.players.Length * 2))) % this.players.Length;
             }
             else
             {
