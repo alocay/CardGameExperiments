@@ -15,6 +15,7 @@ namespace SolitaireStat
         private int currentTurn = 0;
         private bool reversed = false;
         private int numberOfTurns = 0;
+        private bool initialSkip = false;
 
         public UnoGame(int numOfplayers)
         {
@@ -49,6 +50,13 @@ namespace SolitaireStat
             {
                 numberOfTurns++;
                 this.players[this.currentTurn].PlayTurn();
+
+                if (this.initialSkip)
+                {
+                    this.currentTurn = GetNextPlayer();
+                    this.initialSkip = false;
+                }
+
                 this.currentTurn = GetNextPlayer();
                 winner = HaveWinner();
             } while (winner < 0);
@@ -83,7 +91,10 @@ namespace SolitaireStat
 
                     break;
                 case Value.Skip:
-                    this.currentTurn = GetNextPlayer();
+                    if (!this.initialSkip)
+                    {
+                        this.currentTurn = GetNextPlayer();
+                    }
                     break;
                 case Value.DrawTwo:
                     // Make next player draw two cards and skip their turn
@@ -111,6 +122,9 @@ namespace SolitaireStat
 
             switch (card.Value)
             {
+                case Value.Skip:
+                    this.initialSkip = true;
+                    break;
                 case Value.Wild:
                     // Next player choose color and then continue with regular play
                     chosenColor = this.players[this.currentTurn + 1].GetDeclaredColor();
