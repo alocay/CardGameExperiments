@@ -45,3 +45,4 @@ Temporary Items
 # Auto-gened files
 bin
 obj
+*.suo

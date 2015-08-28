@@ -10,59 +10,107 @@ namespace SolitaireStat
     class UnoBot
     {
         public List<UnoCard> Hand { get; set; }
-
         private UnoGame game;
+        private Random rand;
+        private int Index;
 
-        public UnoBot(UnoGame game)
+        public UnoBot(UnoGame game, int index)
         {
             this.Hand = new List<UnoCard>(7);
             this.game = game;
+            this.rand = new Random();
+            this.Index = index;
         }
 
         public void PlayTurn()
         {
             UnoCard topCard = this.game.LookAtTopCard();
             List<int> validIndicies = this.GetValidCards(topCard);
+            int indexToPlay = -1;
+            Color colorToPlay = Color.None;
 
             if (validIndicies.Count > 0)
             {
-                Random r = new Random();
                 List<int> numberCards = this.GetNumberCards(validIndicies);
 
                 if (numberCards.Count > 0)
                 {
-                    int index = r.Next(0, numberCards.Count);
-                    this.game.PlayCard(this.Hand.ElementAt(index));
-                    this.PlayCard
+                    indexToPlay = numberCards.ElementAt(this.rand.Next(0, numberCards.Count));
                 }
                 else
                 {
                     List<int> actionCards = this.GetActionCards(validIndicies);
                     Debug.Assert(actionCards.Count > 0, "Action cards count should not be 0");
+                    indexToPlay = actionCards.ElementAt(this.rand.Next(0, actionCards.Count));
                 }
             }
             else
             {
-                Color selectedColor = Color.None;
-                int matchingCardIndex = DrawCardsUntilMatch(topCard);
-                UnoCard drawnMatchingCard = this.Hand.ElementAt(matchingCardIndex);
-
-                if (drawnMatchingCard.Value == Value.Wild ||
-                    drawnMatchingCard.Value == Value.DrawFour)
-                {
-                    selectedColor = this.GetMajorityColor();
-                    Debug.Assert(selectedColor != Color.None, "Major color should not be None");
-                }
-
-                this.Hand.RemoveAt(matchingCardIndex);
-                this.game.PlayCard(drawnMatchingCard, selectedColor);
+                indexToPlay = DrawCardsUntilMatch(topCard);
             }
+
+            Debug.Assert(indexToPlay != -1, "Index of card to play should not be -1");
+
+            UnoCard cardToPlay = this.Hand.ElementAt(indexToPlay);
+            if (cardToPlay.Value == Value.Wild || cardToPlay.Value == Value.DrawFour)
+            {
+                colorToPlay = this.GetDeclaredColor();
+            }
+
+            this.PlayCard(indexToPlay, colorToPlay);
+        }
+
+        public void AddCardToHand(UnoCard card)
+        {
+            this.Hand.Add(card);
+        }
+
+        public Color GetDeclaredColor()
+        {
+            Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
+            Color majorColor = Color.None;
+
+            foreach (UnoCard card in this.Hand)
+            {
+                try
+                {
+                    colorCounts.Add(card.Color, 1);
+                }
+                catch (ArgumentException)
+                {
+                    colorCounts[card.Color] = colorCounts[card.Color] + 1;
+                }
+            }
+
+            int maxCount = 0;
+            foreach (KeyValuePair<Color, int> counts in colorCounts)
+            {
+                if (counts.Value > maxCount)
+                {
+                    maxCount = counts.Value;
+                    majorColor = counts.Key;
+                }
+            }
+
+            // If the majority color is None then most of the cards in hand are Wilds/Draw Fours
+            // In this case, pick any other color
+            if (majorColor == Color.None)
+            {
+                while (majorColor == Color.None)
+                {
+                    Array values = Enum.GetValues(typeof(Color));
+                    majorColor = (Color)values.GetValue(this.rand.Next(values.Length));
+                }
+            }
+
+            return majorColor;
         }
 
         private void PlayCard(int index, Color color = Color.None)
         {
-            this.game.PlayCard(this.Hand.ElementAt(index), color);
+            UnoCard cardToPlay = this.Hand.ElementAt(index);
             this.Hand.RemoveAt(index);
+            this.game.PlayCard(cardToPlay, color);
         }
 
         private List<int> GetValidCards(UnoCard cardToMatch)
@@ -110,36 +158,6 @@ namespace SolitaireStat
             return matchingCardIndex;
         }
 
-        private Color GetMajorityColor()
-        {
-            Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
-            Color majorColor = Color.None;
-
-            foreach (UnoCard card in this.Hand)
-            {
-                try
-                {
-                    colorCounts.Add(card.Color, 1);
-                }
-                catch(ArgumentException)
-                {
-                    colorCounts[card.Color] = colorCounts[card.Color] + 1;
-                }
-            }
-
-            int maxCount = 0;
-            foreach (KeyValuePair<Color, int> counts in colorCounts)
-            {
-                if (counts.Value > maxCount)
-                {
-                    maxCount = counts.Value;
-                    majorColor = counts.Key;
-                }
-            }
-
-            return majorColor;
-        }
-
         private List<int> GetNumberCards(List<int> indicies)
         {
             List<int> numberCardIndicies = new List<int>();
@@ -147,10 +165,10 @@ namespace SolitaireStat
             foreach (int index in indicies)
             {
                 UnoCard card = this.Hand.ElementAt(index);
-                bool isNumberCard = card.Value != Value.DrawFour ||
-                    card.Value != Value.DrawTwo ||
-                    card.Value != Value.Reverse ||
-                    card.Value != Value.Skip ||
+                bool isNumberCard = card.Value != Value.DrawFour &&
+                    card.Value != Value.DrawTwo &&
+                    card.Value != Value.Reverse &&
+                    card.Value != Value.Skip &&
                     card.Value != Value.Wild;
 
                 if (isNumberCard)

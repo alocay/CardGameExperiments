@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ namespace SolitaireStat
         private const int NumberOfStartingCards = 7;
         private int currentTurn = 0;
         private int movementOfTurns = 1;
+        private int numberOfTurns = 0;
 
         public UnoGame(int numOfplayers)
         {
@@ -23,7 +25,7 @@ namespace SolitaireStat
 
             for (int i = 0; i < numOfplayers; i++)
             {
-                this.players[i] = new UnoBot(this);
+                this.players[i] = new UnoBot(this, i);
             }
 
             this.DealHands();
@@ -31,15 +33,27 @@ namespace SolitaireStat
 
         public int Play()
         {
-            int winner = HaveWinner();
+            int winner = -1;
 
-            while (winner < 0)
+            UnoCard firstCard = this.PlayFirstCard();
+            if (firstCard == null)
             {
-                this.players[this.currentTurn].PlayTurn();
-
-                this.currentTurn += ((currentTurn + movementOfTurns) % this.players.Length);
+                do
+                {
+                    this.deck.ReAddCardAndReShuffle(firstCard);
+                    firstCard = this.PlayFirstCard();
+                } while (firstCard == null);
             }
 
+            do
+            {
+                numberOfTurns++;
+                this.players[this.currentTurn].PlayTurn();
+                this.currentTurn = GetNextPlayer();
+                winner = HaveWinner();
+            } while (winner < 0);
+
+            Debug.Assert(winner >= 0, "Winner should be >= 0");
             return winner;
         }
 
@@ -55,7 +69,72 @@ namespace SolitaireStat
 
         public void PlayCard(UnoCard card, Color selectedColor = Color.None)
         {
+            switch (card.Value)
+            {
+                case Value.Reverse:
+                    this.movementOfTurns *= -1;
+                    break;
+                case Value.Skip:
+                    this.currentTurn = GetNextPlayer();
+                    break;
+                case Value.DrawTwo:
+                    // Make next player draw two cards and skip their turn
+                    this.DrawCardsAndSkip(2);
+                    break;
+                case Value.DrawFour:
+                    // Make next player draw four cards and skip their turn
+                    this.DrawCardsAndSkip(4);
+                    break;
+            }
+
+            // If the card is a Wild/DrawFour, give it the chosen color
+            if (selectedColor != Color.None)
+            {
+                card.Color = selectedColor;
+            }
+
             this.deck.PlayCard(card);
+        }
+
+        private UnoCard PlayFirstCard()
+        {
+            UnoCard card = (UnoCard)this.deck.GetNextCard();
+            Color chosenColor = Color.None;
+
+            switch (card.Value)
+            {
+                case Value.Wild:
+                    // Next player choose color and then continue with regular play
+                    chosenColor = this.players[this.currentTurn + this.movementOfTurns].GetDeclaredColor();
+                    break;
+                case Value.DrawFour:
+                    // Reshuffle deck and start again
+                    card = null;
+                    break;
+            }
+
+            if (card != null)
+            {
+                this.PlayCard(card, chosenColor);
+            }
+
+            return card;
+        }
+
+        private int GetNextPlayer()
+        {
+            return (this.currentTurn + this.movementOfTurns) % this.players.Length;
+        }
+
+        private void DrawCardsAndSkip(int numOfCardsToDraw)
+        {
+            int nextPlayer = GetNextPlayer();
+            for (int i = 0; i < numOfCardsToDraw; i++)
+            {
+                this.players[nextPlayer].AddCardToHand(this.deck.DrawCard());
+            }
+
+            this.currentTurn = nextPlayer;
         }
 
         private void DealHands()

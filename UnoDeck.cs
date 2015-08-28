@@ -34,9 +34,19 @@ namespace SolitaireStat
             this.Shuffle();
         }
 
+        public void ReAddCardAndReShuffle(UnoCard card)
+        {
+            this.cards.Add(card);
+            this.Shuffle();
+        }
+
         public void PlayCard(UnoCard card)
         {
-            this.graveyard.Add(this.currentCard);
+            if (this.currentCard != null)
+            {
+                this.graveyard.Add(this.currentCard);
+            }
+
             this.currentCard = card;
         }
 

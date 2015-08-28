@@ -61,7 +61,8 @@ namespace SolitaireStat
 
                         break;
                     case 'u':
-                        UnoGame ugame = new UnoGame(3);
+                        UnoGame ugame = new UnoGame(2);
+                        ugame.Play();
                         break;
                 }
             }
