@@ -16,11 +16,12 @@ namespace SolitaireStat
         {
             const int defaultTotalRounds = 200;
             string input = string.Empty;
+            UnoGame ugame = null;
 
             while (string.IsNullOrEmpty(input) || input.First() != 'q')
             {
                 System.Console.Write("Provide an option: ");
-       
+                
                 input = Console.ReadLine();
 
                 System.Console.WriteLine("");
@@ -61,8 +62,24 @@ namespace SolitaireStat
 
                         break;
                     case 'u':
-                        UnoGame ugame = new UnoGame(2);
-                        ugame.Play();
+                        UnoGame ugame2 = new UnoGame(4);
+                        ugame2.Play();
+                        break;
+                    case 'o':
+                        if (ugame == null)
+                        {
+                            ugame = new UnoGame(4);
+                            ugame.SetupPlay();
+
+                            System.Console.WriteLine("Game Setup: ");
+
+                            ugame.DisplayState();
+
+                            System.Console.WriteLine("Game Starting... \n");
+                        }
+
+                        ugame.Step();
+                        ugame.DisplayState();
                         break;
                 }
             }

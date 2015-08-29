@@ -82,13 +82,16 @@ namespace SolitaireStat
                 }
             }
 
-            int maxCount = 0;
-            foreach (KeyValuePair<Color, int> counts in colorCounts)
+            List<KeyValuePair<Color, int>> colorCountsList = colorCounts.ToList<KeyValuePair<Color, int>>();
+            colorCountsList.Sort((firstPair, nextPair) => firstPair.Value.CompareTo(nextPair.Value));
+            colorCountsList.Reverse();
+
+            for (int i = 0; i < colorCountsList.Count; i++)
             {
-                if (counts.Value > maxCount)
+                majorColor = colorCountsList.ElementAt(i).Key;
+                if (majorColor != Color.None)
                 {
-                    maxCount = counts.Value;
-                    majorColor = counts.Key;
+                    break;
                 }
             }
 

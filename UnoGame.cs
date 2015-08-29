@@ -16,6 +16,7 @@ namespace SolitaireStat
         private bool reversed = false;
         private int numberOfTurns = 0;
         private bool initialSkip = false;
+        private bool setupComplete = false;
 
         public UnoGame(int numOfplayers)
         {
@@ -32,37 +33,51 @@ namespace SolitaireStat
             this.DealHands();
         }
 
+        public void SetupPlay()
+        {
+            if (!this.setupComplete)
+            {
+                UnoCard firstCard = this.PlayFirstCard();
+                if (firstCard == null)
+                {
+                    do
+                    {
+                        this.deck.ReAddCardAndReShuffle(firstCard);
+                        firstCard = this.PlayFirstCard();
+                    } while (firstCard == null);
+                }
+
+                this.setupComplete = true;
+            }
+        }
+
         public int Play()
         {
             int winner = -1;
-
-            UnoCard firstCard = this.PlayFirstCard();
-            if (firstCard == null)
-            {
-                do
-                {
-                    this.deck.ReAddCardAndReShuffle(firstCard);
-                    firstCard = this.PlayFirstCard();
-                } while (firstCard == null);
-            }
+            this.SetupPlay();
 
             do
             {
-                numberOfTurns++;
-                this.players[this.currentTurn].PlayTurn();
-
-                if (this.initialSkip)
-                {
-                    this.currentTurn = GetNextPlayer();
-                    this.initialSkip = false;
-                }
-
-                this.currentTurn = GetNextPlayer();
+                Step();
                 winner = HaveWinner();
             } while (winner < 0);
 
             Debug.Assert(winner >= 0, "Winner should be >= 0");
             return winner;
+        }
+
+        public void Step()
+        {
+            numberOfTurns++;
+            this.players[this.currentTurn].PlayTurn();
+
+            if (this.initialSkip)
+            {
+                this.currentTurn = GetNextPlayer();
+                this.initialSkip = false;
+            }
+
+            this.currentTurn = GetNextPlayer();
         }
 
         public UnoCard LookAtTopCard()
@@ -115,6 +130,119 @@ namespace SolitaireStat
             this.deck.PlayCard(card);
         }
 
+        public void DisplayState()
+        {
+            for (int i = 0; i < this.players.Length; i++)
+            {
+                UnoBot player = this.players[i];
+
+                if (this.currentTurn == i)
+                {
+                    System.Console.Write("> Player " + i + ": ");
+                }
+                else
+                {
+                    System.Console.Write("  Player " + i + ": ");
+                }                
+
+                foreach (UnoCard card in player.Hand)
+                {
+                    System.Console.Write(GetCardString(card) + "  ");
+                }
+
+                System.Console.Write("\n");
+            }
+
+            System.Console.Write("\n\n");
+
+            UnoCard topCard = (UnoCard)this.deck.GetCurrentCard();
+
+            System.Console.Write(GetCardString(topCard) + "   D: " + this.deck.GetDeckCount() + "  G: " + this.deck.GetGraveyardCount());
+
+            System.Console.Write("\n\n");
+
+            int winner = HaveWinner();
+            if (winner > -1)
+            {
+                System.Console.WriteLine("Player " + winner + " is the winner!\n");
+            }
+        }
+
+        private string GetCardString(UnoCard card)
+        {
+            string cardString = string.Empty;
+
+            switch (card.Color)
+            {
+                case Color.Red:
+                    cardString += "R";
+                    break;
+                case Color.Blue:
+                    cardString += "B";
+                    break;
+                case Color.Green:
+                    cardString += "G";
+                    break;
+                case Color.Yellow:
+                    cardString += "Y";
+                    break;
+                case Color.None:
+                    cardString += "N";
+                    break;
+            }
+
+            switch (card.Value)
+            {
+                case Value.Zero:
+                    cardString += "0";
+                    break;
+                case Value.One:
+                    cardString += "1";
+                    break;
+                case Value.Two:
+                    cardString += "2";
+                    break;
+                case Value.Three:
+                    cardString += "3";
+                    break;
+                case Value.Four:
+                    cardString += "4";
+                    break;
+                case Value.Five:
+                    cardString += "5";
+                    break;
+                case Value.Six:
+                    cardString += "6";
+                    break;
+                case Value.Seven:
+                    cardString += "7";
+                    break;
+                case Value.Eight:
+                    cardString += "8";
+                    break;
+                case Value.Nine:
+                    cardString += "9";
+                    break;
+                case Value.Reverse:
+                    cardString += "R";
+                    break;
+                case Value.Skip:
+                    cardString += "S";
+                    break;
+                case Value.DrawTwo:
+                    cardString += "2";
+                    break;
+                case Value.DrawFour:
+                    cardString += "4";
+                    break;
+                case Value.Wild:
+                    cardString += "W";
+                    break;
+            }
+
+            return cardString;
+        }
+
         private UnoCard PlayFirstCard()
         {
             UnoCard card = (UnoCard)this.deck.GetNextCard();
@@ -147,7 +275,7 @@ namespace SolitaireStat
         {
             if (reversed)
             {
-                return (Math.Abs((this.currentTurn - 1) % (this.players.Length * 2))) % this.players.Length;
+                return (this.currentTurn - 1 % this.players.Length + this.players.Length) % this.players.Length;
             }
             else
             {
