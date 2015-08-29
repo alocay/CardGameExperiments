@@ -24,10 +24,12 @@ namespace SolitaireStat
             this.deck = new UnoDeck();
             this.players = new UnoBot[numOfplayers];
             this.currentTurn = r.Next(0, numOfplayers);
+            Array values = Enum.GetValues(typeof(UnoBehavior));
 
             for (int i = 0; i < numOfplayers; i++)
             {
-                this.players[i] = new UnoBot(this, i);
+                UnoBehavior behavior = (UnoBehavior)values.GetValue(r.Next(values.Length));
+                this.players[i] = new UnoBot(this, behavior, i);
             }
 
             this.DealHands();
@@ -138,11 +140,11 @@ namespace SolitaireStat
 
                 if (this.currentTurn == i)
                 {
-                    System.Console.Write("> Player " + i + ": ");
+                    System.Console.Write("> " + player.GetBehaviorString() + " Player " + i + ": ");
                 }
                 else
                 {
-                    System.Console.Write("  Player " + i + ": ");
+                    System.Console.Write("  " + player.GetBehaviorString() + " Player " + i + ": ");
                 }                
 
                 foreach (UnoCard card in player.Hand)
@@ -194,49 +196,49 @@ namespace SolitaireStat
             switch (card.Value)
             {
                 case Value.Zero:
-                    cardString += "0";
+                    cardString += "00";
                     break;
                 case Value.One:
-                    cardString += "1";
+                    cardString += "01";
                     break;
                 case Value.Two:
-                    cardString += "2";
+                    cardString += "02";
                     break;
                 case Value.Three:
-                    cardString += "3";
+                    cardString += "03";
                     break;
                 case Value.Four:
-                    cardString += "4";
+                    cardString += "04";
                     break;
                 case Value.Five:
-                    cardString += "5";
+                    cardString += "05";
                     break;
                 case Value.Six:
-                    cardString += "6";
+                    cardString += "06";
                     break;
                 case Value.Seven:
-                    cardString += "7";
+                    cardString += "07";
                     break;
                 case Value.Eight:
-                    cardString += "8";
+                    cardString += "08";
                     break;
                 case Value.Nine:
-                    cardString += "9";
+                    cardString += "09";
                     break;
                 case Value.Reverse:
-                    cardString += "R";
+                    cardString += "Re";
                     break;
                 case Value.Skip:
-                    cardString += "S";
+                    cardString += "Sk";
                     break;
                 case Value.DrawTwo:
-                    cardString += "2";
+                    cardString += "D2";
                     break;
                 case Value.DrawFour:
-                    cardString += "4";
+                    cardString += "D4";
                     break;
                 case Value.Wild:
-                    cardString += "W";
+                    cardString += "Wi";
                     break;
             }
 

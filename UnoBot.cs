@@ -7,19 +7,32 @@ using System.Threading.Tasks;
 
 namespace SolitaireStat
 {
+    enum UnoBehavior
+    {
+        Passive = 0,
+        Aggressive = 1,
+        Random = 2
+    }
+
     class UnoBot
     {
         public List<UnoCard> Hand { get; set; }
         private UnoGame game;
         private Random rand;
         private int Index;
+        private UnoBehavior behavior;
 
-        public UnoBot(UnoGame game, int index)
+        public UnoBot(UnoGame game, int index) : this(game, UnoBehavior.Passive, index)
+        {
+        }
+
+        public UnoBot(UnoGame game, UnoBehavior behavior, int index)
         {
             this.Hand = new List<UnoCard>(7);
             this.game = game;
             this.rand = new Random();
             this.Index = index;
+            this.behavior = behavior;
         }
 
         public void PlayTurn()
@@ -31,24 +44,24 @@ namespace SolitaireStat
 
             if (validIndicies.Count > 0)
             {
-                List<int> numberCards = this.GetNumberCards(validIndicies);
-
-                if (numberCards.Count > 0)
+                switch(this.behavior)
                 {
-                    indexToPlay = numberCards.ElementAt(this.rand.Next(0, numberCards.Count));
-                }
-                else
-                {
-                    List<int> actionCards = this.GetActionCards(validIndicies);
-                    Debug.Assert(actionCards.Count > 0, "Action cards count should not be 0");
-                    indexToPlay = actionCards.ElementAt(this.rand.Next(0, actionCards.Count));
+                    case UnoBehavior.Passive:
+                        indexToPlay = this.PickCardPassive(validIndicies);
+                        break;
+                    case UnoBehavior.Aggressive:
+                        indexToPlay = this.PickCardAggressive(validIndicies);
+                        break;
+                    case UnoBehavior.Random:
+                        indexToPlay = this.PickCardRandom(validIndicies);
+                        break;
                 }
             }
             else
             {
                 indexToPlay = DrawCardsUntilMatch(topCard);
             }
-
+            
             Debug.Assert(indexToPlay != -1, "Index of card to play should not be -1");
 
             UnoCard cardToPlay = this.Hand.ElementAt(indexToPlay);
@@ -67,33 +80,7 @@ namespace SolitaireStat
 
         public Color GetDeclaredColor()
         {
-            Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
-            Color majorColor = Color.None;
-
-            foreach (UnoCard card in this.Hand)
-            {
-                try
-                {
-                    colorCounts.Add(card.Color, 1);
-                }
-                catch (ArgumentException)
-                {
-                    colorCounts[card.Color] = colorCounts[card.Color] + 1;
-                }
-            }
-
-            List<KeyValuePair<Color, int>> colorCountsList = colorCounts.ToList<KeyValuePair<Color, int>>();
-            colorCountsList.Sort((firstPair, nextPair) => firstPair.Value.CompareTo(nextPair.Value));
-            colorCountsList.Reverse();
-
-            for (int i = 0; i < colorCountsList.Count; i++)
-            {
-                majorColor = colorCountsList.ElementAt(i).Key;
-                if (majorColor != Color.None)
-                {
-                    break;
-                }
-            }
+            Color majorColor = this.GetMajorityColor();
 
             // If the majority color is None then most of the cards in hand are Wilds/Draw Fours
             // In this case, pick any other color
@@ -107,6 +94,80 @@ namespace SolitaireStat
             }
 
             return majorColor;
+        }
+
+        public string GetBehaviorString()
+        {
+            string behaviorString = string.Empty;
+
+            switch(this.behavior)
+            {
+                case UnoBehavior.Passive:
+                    behaviorString = "P";
+                    break;
+                case UnoBehavior.Aggressive:
+                    behaviorString = "A";
+                    break;
+                case UnoBehavior.Random:
+                    behaviorString = "R";
+                    break;
+            }
+
+            return behaviorString;
+        }
+
+        private int PickCardPassive(List<int> validIndicies)
+        {
+            int indexToPlay;
+            List<int> numberCards = this.GetNumberCards(validIndicies);
+
+            if (numberCards.Count > 0)
+            {
+                indexToPlay = numberCards.ElementAt(0); // default value
+
+                Color majorColor = this.GetMajorityColor();
+                for (int i = 0; i < numberCards.Count; i++)
+                {
+                    int index = numberCards.ElementAt(i);
+                    if (this.Hand.ElementAt(index).Color == majorColor)
+                    {
+                        indexToPlay = index;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                List<int> actionCards = this.GetActionCards(validIndicies);
+                Debug.Assert(actionCards.Count > 0, "Action cards count should not be 0");
+                indexToPlay = actionCards.ElementAt(this.rand.Next(0, actionCards.Count));
+            }
+
+            return indexToPlay;
+        }
+
+        private int PickCardAggressive(List<int> validIndicies)
+        {
+            int indexToPlay;
+            List<int> actionCards = this.GetActionCards(validIndicies);
+
+            if (actionCards.Count > 0)
+            {
+                indexToPlay = actionCards.ElementAt(this.rand.Next(0, actionCards.Count));
+            }
+            else
+            {
+                List<int> numberCards = this.GetNumberCards(validIndicies);
+                Debug.Assert(numberCards.Count > 0, "Number cards count should not be 0");
+                indexToPlay = numberCards.ElementAt(this.rand.Next(0, numberCards.Count));
+            }
+
+            return indexToPlay;
+        }
+
+        private int PickCardRandom(List<int> validIndicies)
+        {
+            return validIndicies.ElementAt(this.rand.Next(0, validIndicies.Count));
         }
 
         private void PlayCard(int index, Color color = Color.None)
@@ -203,6 +264,46 @@ namespace SolitaireStat
             }
 
             return actionCardIndicies;
+        }
+
+        private Color GetMajorityColor()
+        {
+            Dictionary<Color, int> colorCounts = new Dictionary<Color, int>();
+            Color majorColor = Color.None;
+
+            foreach (UnoCard card in this.Hand)
+            {
+                try
+                {
+                    colorCounts.Add(card.Color, 1);
+                }
+                catch (ArgumentException)
+                {
+                    colorCounts[card.Color] = colorCounts[card.Color] + 1;
+                }
+            }
+
+            List<KeyValuePair<Color, int>> colorCountsList = colorCounts.ToList<KeyValuePair<Color, int>>();
+            colorCountsList.Sort((firstPair, nextPair) => firstPair.Value.CompareTo(nextPair.Value));
+            colorCountsList.Reverse();
+
+            if (colorCountsList.Count == 1)
+            {
+                majorColor = colorCountsList.First().Key;
+            }
+            else
+            {
+                for (int i = 0; i < colorCountsList.Count; i++)
+                {
+                    majorColor = colorCountsList.ElementAt(i).Key;
+                    if (majorColor != Color.None)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return majorColor;
         }
     }
 }

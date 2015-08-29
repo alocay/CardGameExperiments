@@ -44,6 +44,12 @@ namespace SolitaireStat
         {
             if (this.currentCard != null)
             {
+                if (((UnoCard)this.currentCard).Value == Value.DrawFour || 
+                    ((UnoCard)this.currentCard).Value == Value.Wild)
+                {
+                    ((UnoCard)this.currentCard).Color = Color.None;
+                }
+
                 this.graveyard.Add(this.currentCard);
             }
 
