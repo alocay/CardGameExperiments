@@ -14,22 +14,26 @@ namespace SolitaireStat
         private const int NumberOfStartingCards = 7;
         private int currentTurn = 0;
         private bool reversed = false;
-        private int numberOfTurns = 0;
         private bool initialSkip = false;
         private bool setupComplete = false;
 
-        public UnoGame(int numOfplayers)
+        public int NumOfTurns
         {
+            get;
+            set;
+        }
+
+        public UnoGame(UnoBehavior[] behaviors)
+        {
+            int numOfPlayers = behaviors.Length;
             Random r = new Random();
             this.deck = new UnoDeck();
-            this.players = new UnoBot[numOfplayers];
-            this.currentTurn = r.Next(0, numOfplayers);
-            Array values = Enum.GetValues(typeof(UnoBehavior));
+            this.players = new UnoBot[numOfPlayers];
+            this.currentTurn = r.Next(0, numOfPlayers);
 
-            for (int i = 0; i < numOfplayers; i++)
+            for (int i = 0; i < this.players.Length; i++)
             {
-                UnoBehavior behavior = (UnoBehavior)values.GetValue(r.Next(values.Length));
-                this.players[i] = new UnoBot(this, behavior, i);
+                this.players[i] = new UnoBot(this, behaviors[i], i);
             }
 
             this.DealHands();
@@ -70,7 +74,7 @@ namespace SolitaireStat
 
         public void Step()
         {
-            numberOfTurns++;
+            this.NumOfTurns++;
             this.players[this.currentTurn].PlayTurn();
 
             if (this.initialSkip)
@@ -257,7 +261,7 @@ namespace SolitaireStat
                     break;
                 case Value.Wild:
                     // Next player choose color and then continue with regular play
-                    chosenColor = this.players[this.currentTurn + 1].GetDeclaredColor();
+                    chosenColor = this.players[this.GetNextPlayer()].GetDeclaredColor();
                     break;
                 case Value.DrawFour:
                     // Reshuffle deck and start again

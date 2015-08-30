@@ -14,7 +14,6 @@ namespace SolitaireStat
 
         static void Main(string[] args)
         {
-            const int defaultTotalRounds = 200;
             string input = string.Empty;
             UnoGame ugame = null;
 
@@ -22,7 +21,7 @@ namespace SolitaireStat
             {
                 System.Console.Write("Provide an option: ");
                 
-                input = Console.ReadLine();
+                input = Console.ReadLine().ToLower();
 
                 System.Console.WriteLine("");
 
@@ -46,35 +45,33 @@ namespace SolitaireStat
 
                         System.Console.WriteLine("Robot going to work...\n\n");
 
-                        RunRobot(1);
+                        RunSolitaireRobot(1);
 
                         System.Console.WriteLine("Ending setup: ");
                         game.DisplayState();
                         break;
                     case 's':
-                        int totalRounds = 0;
-                        System.Console.Write("Number of rounds: ");
-                        input = Console.ReadLine();
-
-                        bool success = int.TryParse(input, out totalRounds);
-                        totalRounds = success ? totalRounds : defaultTotalRounds;
-                        RunRobot(totalRounds);
-
+                        int totalRounds = GetIntInput("Number of rounds: ", 100);
+                        RunSolitaireRobot(totalRounds);
                         break;
                     case 'u':
-                        UnoGame ugame2 = new UnoGame(4);
-                        ugame2.Play();
-                        break;
+                        {
+                            int numOfPlayers = GetIntInput("Number of players: ", 4);
+                            UnoBehavior[] behaviors = GetPlayerBehaviors(numOfPlayers);
+                            int numOfGames = GetIntInput("Number of games: ", 100);
+                            RunUnoBots(numOfGames, behaviors);
+                            break;
+                        }
                     case 'o':
                         if (ugame == null)
                         {
-                            ugame = new UnoGame(4);
+                            int numOfPlayers = GetIntInput("Number of players: ", 4);
+                            UnoBehavior[] behaviors = GetPlayerBehaviors(numOfPlayers);
+                            ugame = new UnoGame(behaviors);
                             ugame.SetupPlay();
 
                             System.Console.WriteLine("Game Setup: ");
-
                             ugame.DisplayState();
-
                             System.Console.WriteLine("Game Starting... \n");
                         }
 
@@ -85,7 +82,58 @@ namespace SolitaireStat
             }
         }
 
-        private static void RunRobot(int numOfRounds)
+        private static int GetIntInput(string msg, int defaultValue)
+        {
+            int value = 0;
+            System.Console.Write(msg);
+            string input = Console.ReadLine();
+
+            bool success = int.TryParse(input, out value);
+            value = success ? value : defaultValue;
+
+            return value;
+        }
+
+        private static UnoBehavior[] GetPlayerBehaviors(int numOfPlayers)
+        {
+            UnoBehavior[] behaviors = new UnoBehavior[numOfPlayers];
+
+            System.Console.WriteLine("Specify each player behavior (A = Aggressive, P = Passive, R = Random)\n");
+
+            for (int i = 0; i < behaviors.Length; i++)
+            {
+                System.Console.Write("Player " + i + " behavior: ");
+                string input = Console.ReadLine().ToLower();
+
+                System.Console.WriteLine("");
+
+                while (input != "a" && input != "p" && input != "r")
+                {
+                    System.Console.WriteLine("Invalid option given!\n");
+                    System.Console.Write("Player " + i + " behavior: ");
+                    input = Console.ReadLine().ToLower();
+                }
+
+                switch(input)
+                {
+                    case "a":
+                        behaviors[i] = UnoBehavior.Aggressive;
+                        break;
+                    case "p":
+                        behaviors[i] = UnoBehavior.Passive;
+                        break;
+                    case "r":
+                        behaviors[i] = UnoBehavior.Random;
+                        break;
+                }
+
+                System.Console.WriteLine("\n");
+            }
+
+            return behaviors;
+        }
+
+        private static void RunSolitaireRobot(int numOfRounds)
         {
             int numOfWins = 0;
             int totalMoves = 0;
@@ -124,6 +172,44 @@ namespace SolitaireStat
             System.Console.WriteLine("Total time: " + totalRunSw.ElapsedMilliseconds + " ms");
             System.Console.WriteLine("Avg time per round: " + avgTimePerRound + " ms");
             System.Console.WriteLine("Win rate: " + (winRate * 100.0) + "%\n");
+        }
+
+        private static void RunUnoBots(int numOfRounds, UnoBehavior[] behaviors)
+        {
+            int numOfPlayers = behaviors.Length;
+            int[] wins = new int[numOfPlayers];
+            int totalMoves = 0;
+            long totalOfAllRunsMS = 0;
+            Stopwatch allGamesSw = new Stopwatch();
+            Stopwatch eachGameSw = new Stopwatch();
+
+            allGamesSw.Start();
+            for (int i = 0; i < numOfRounds; i++)
+            {
+                UnoGame game = new UnoGame(behaviors);
+
+                eachGameSw.Restart();
+                int winner = game.Play();
+                eachGameSw.Stop();
+
+                wins[winner]++;
+
+                totalOfAllRunsMS += eachGameSw.ElapsedMilliseconds;
+                totalMoves += game.NumOfTurns;
+            }
+            allGamesSw.Stop();
+
+            //double winRate = (double)numOfWins / (double)numOfRounds;
+            double avgMovesPerRound = (double)totalMoves / (double)numOfRounds;
+            double avgTimePerRound = (double)totalOfAllRunsMS / (double)numOfRounds;
+
+            System.Console.WriteLine("Total rounds: " + numOfRounds);
+            //System.Console.WriteLine("Total Wins: " + numOfWins);
+            //System.Console.WriteLine("Total Losses: " + (numOfRounds - numOfWins));
+            System.Console.WriteLine("Avg moves per round: " + avgMovesPerRound);
+            System.Console.WriteLine("Total time: " + allGamesSw.ElapsedMilliseconds + " ms");
+            System.Console.WriteLine("Avg time per round: " + avgTimePerRound + " ms");
+            //System.Console.WriteLine("Win rate: " + (winRate * 100.0) + "%\n");
         }
     }
 }
