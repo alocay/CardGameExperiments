@@ -62,5 +62,26 @@ namespace SolitaireStat
 
             return suit + card.Value.ToString("D2");
         }
+
+        public static string GetBehaviorString(UnoBehavior behavior)
+        {
+            string behaviorString = string.Empty;
+
+            switch (behavior)
+            {
+                case UnoBehavior.Passive:
+                    behaviorString = "P";
+                    break;
+                case UnoBehavior.Aggressive:
+                    behaviorString = "A";
+                    break;
+                case UnoBehavior.Random:
+                    behaviorString = "R";
+                    break;
+            }
+
+            return behaviorString;
+        }
+
     }
 }

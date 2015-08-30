@@ -52,6 +52,7 @@ namespace SolitaireStat
                         break;
                     case 's':
                         int totalRounds = GetIntInput("Number of rounds: ", 100);
+                        System.Console.WriteLine();
                         RunSolitaireRobot(totalRounds);
                         break;
                     case 'u':
@@ -59,6 +60,9 @@ namespace SolitaireStat
                             int numOfPlayers = GetIntInput("Number of players: ", 4);
                             UnoBehavior[] behaviors = GetPlayerBehaviors(numOfPlayers);
                             int numOfGames = GetIntInput("Number of games: ", 100);
+
+                            System.Console.WriteLine();
+
                             RunUnoBots(numOfGames, behaviors);
                             break;
                         }
@@ -98,14 +102,13 @@ namespace SolitaireStat
         {
             UnoBehavior[] behaviors = new UnoBehavior[numOfPlayers];
 
+            System.Console.WriteLine("\n");
             System.Console.WriteLine("Specify each player behavior (A = Aggressive, P = Passive, R = Random)\n");
 
             for (int i = 0; i < behaviors.Length; i++)
             {
                 System.Console.Write("Player " + i + " behavior: ");
                 string input = Console.ReadLine().ToLower();
-
-                System.Console.WriteLine("");
 
                 while (input != "a" && input != "p" && input != "r")
                 {
@@ -127,7 +130,7 @@ namespace SolitaireStat
                         break;
                 }
 
-                System.Console.WriteLine("\n");
+                System.Console.WriteLine("");
             }
 
             return behaviors;
@@ -174,7 +177,7 @@ namespace SolitaireStat
             System.Console.WriteLine("Win rate: " + (winRate * 100.0) + "%\n");
         }
 
-        private static void RunUnoBots(int numOfRounds, UnoBehavior[] behaviors)
+        private static void RunUnoBots(int numOfGames, UnoBehavior[] behaviors)
         {
             int numOfPlayers = behaviors.Length;
             int[] wins = new int[numOfPlayers];
@@ -184,7 +187,7 @@ namespace SolitaireStat
             Stopwatch eachGameSw = new Stopwatch();
 
             allGamesSw.Start();
-            for (int i = 0; i < numOfRounds; i++)
+            for (int i = 0; i < numOfGames; i++)
             {
                 UnoGame game = new UnoGame(behaviors);
 
@@ -199,17 +202,23 @@ namespace SolitaireStat
             }
             allGamesSw.Stop();
 
-            //double winRate = (double)numOfWins / (double)numOfRounds;
-            double avgMovesPerRound = (double)totalMoves / (double)numOfRounds;
-            double avgTimePerRound = (double)totalOfAllRunsMS / (double)numOfRounds;
+            System.Console.WriteLine("Total games: " + numOfGames + "\n");
 
-            System.Console.WriteLine("Total rounds: " + numOfRounds);
-            //System.Console.WriteLine("Total Wins: " + numOfWins);
-            //System.Console.WriteLine("Total Losses: " + (numOfRounds - numOfWins));
+            Array.Sort(wins);
+            for (int i = 0; i < wins.Length; i++)
+            {
+                double winRate = (double)wins[i] / (double)numOfGames;
+                System.Console.WriteLine("Player (" + Utility.GetBehaviorString(behaviors[i]) + ") " + i + " wins: " + wins[i] + " | " + (winRate * 100) + "%");
+            }
+
+            System.Console.WriteLine();
+
+            double avgMovesPerRound = (double)totalMoves / (double)numOfGames;
+            double avgTimePerRound = (double)totalOfAllRunsMS / (double)numOfGames;
+
             System.Console.WriteLine("Avg moves per round: " + avgMovesPerRound);
             System.Console.WriteLine("Total time: " + allGamesSw.ElapsedMilliseconds + " ms");
-            System.Console.WriteLine("Avg time per round: " + avgTimePerRound + " ms");
-            //System.Console.WriteLine("Win rate: " + (winRate * 100.0) + "%\n");
+            System.Console.WriteLine("Avg time per round: " + avgTimePerRound + " ms\n");
         }
     }
 }

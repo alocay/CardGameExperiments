@@ -96,24 +96,9 @@ namespace SolitaireStat
             return majorColor;
         }
 
-        public string GetBehaviorString()
+        public UnoBehavior GetBehavior()
         {
-            string behaviorString = string.Empty;
-
-            switch(this.behavior)
-            {
-                case UnoBehavior.Passive:
-                    behaviorString = "P";
-                    break;
-                case UnoBehavior.Aggressive:
-                    behaviorString = "A";
-                    break;
-                case UnoBehavior.Random:
-                    behaviorString = "R";
-                    break;
-            }
-
-            return behaviorString;
+            return this.behavior;
         }
 
         private int PickCardPassive(List<int> validIndicies)
@@ -215,6 +200,12 @@ namespace SolitaireStat
             do
             {
                 drawnCard = this.game.DrawCard();
+
+                if (drawnCard == null)
+                {
+                    int x = 0;
+                }
+
                 this.Hand.Add(drawnCard);
                 matchingCardIndex++;
             } while (!DoCardsMatch(drawnCard, cardToMatch));

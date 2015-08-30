@@ -44,13 +44,13 @@ namespace SolitaireStat
             if (!this.setupComplete)
             {
                 UnoCard firstCard = this.PlayFirstCard();
-                if (firstCard == null)
+                if (firstCard.Value == Value.DrawFour)
                 {
                     do
                     {
                         this.deck.ReAddCardAndReShuffle(firstCard);
                         firstCard = this.PlayFirstCard();
-                    } while (firstCard == null);
+                    } while (firstCard.Value == Value.DrawFour);
                 }
 
                 this.setupComplete = true;
@@ -144,11 +144,11 @@ namespace SolitaireStat
 
                 if (this.currentTurn == i)
                 {
-                    System.Console.Write("> " + player.GetBehaviorString() + " Player " + i + ": ");
+                    System.Console.Write("> " + Utility.GetBehaviorString(player.GetBehavior()) + " Player " + i + ": ");
                 }
                 else
                 {
-                    System.Console.Write("  " + player.GetBehaviorString() + " Player " + i + ": ");
+                    System.Console.Write("  " + Utility.GetBehaviorString(player.GetBehavior()) + " Player " + i + ": ");
                 }                
 
                 foreach (UnoCard card in player.Hand)
@@ -263,13 +263,9 @@ namespace SolitaireStat
                     // Next player choose color and then continue with regular play
                     chosenColor = this.players[this.GetNextPlayer()].GetDeclaredColor();
                     break;
-                case Value.DrawFour:
-                    // Reshuffle deck and start again
-                    card = null;
-                    break;
             }
 
-            if (card != null)
+            if (card.Value != Value.DrawFour)
             {
                 this.PlayCard(card, chosenColor);
             }
